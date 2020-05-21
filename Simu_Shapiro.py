@@ -6,21 +6,23 @@ y = [0, 0.5, 0.5, 1, 1, 1.5, 1.5, 2, 1.5 , 1.5, 1, 1, 0.5, 0.5, 0, 0]
 
 ################ VARIABLES ############## (toutes les distances sont en kilomètres)
 gamma = 1 #constante de RG
-c = 300000 #célérité de la lumière
-masseAstre = 54168468
-rayonAstre = 5165498
-rayonSchw = 3 #rayon de Schwarzschild
+c = 2.99792458*10**8 #célérité de la lumière (en m/s)
+G = 6.6738480*10**-11 #constante gravitationnelle (en m**3 kg**-1 s**-2)
+masseAstre = 1.989*10**30 #masse du soleil par défault, peut être modifié par la suite (en kg)
+rayonSchw = (2*G*masseAstre)/(c**2) #rayon de Schwarzschild (en mètres)
 vitTerre = 30 #vitesse de la Terre sur son orbite (en km/s)
-b = 1120000 #paramètre d'impact
-r1 = 125400000 #distance Terre - Astre
-r2 = 116165132 #distance Astre - Sonde
+b = 1120000 #paramètre d'impact (distance la plus courte entre le centre de l'astre de le rayonnement qui l'approche) 
+r1 = 125400000 #distance Terre - Astre (en km)
+r2 = 116165132 #distance Astre - Sonde (en km)
 
 
 
 ############## CALCUL DECALAGE FREQUENTIEL ########
 freqShift = -(rayonSchw/c)*(1+gamma)*(1/b)*vitTerre
 
-print(freqShift)
+print("Masse de l'astre : "+str(masseAstre))
+print("Rayon de Schwarzschild : "+str(rayonSchw))
+print("Décalage fréquentiel : "+str(freqShift))
 
 #plt.plot(x, y, '-.', color = "green", lw = 2)
 #plt.title("Mon beau sapin")
