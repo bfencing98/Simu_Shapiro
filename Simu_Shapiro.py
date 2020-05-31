@@ -131,7 +131,10 @@ class SimuShapiroApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         
         tk.Tk.__init__(self, *args, **kwargs)
-        tk.Tk.iconbitmap(self,default='simu-shapiro.ico') #définition de l'icône de l'application
+        try:
+            tk.Tk.iconbitmap(self,default='Simu_Shapiro.ico') #définition de l'icône de l'application
+        except:
+            print("Fichier .ico manquant, continue avec l'icône par défaut")
         tk.Tk.wm_title(self, "Simulation - Effet Shapiro") #définition du nom de l'application
         
         #################### CREATION DE LA FENETRE PRINCIPALE ####################
