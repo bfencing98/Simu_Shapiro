@@ -5,6 +5,7 @@
 ##                                                           ##
 ###############################################################
 
+#librairie matplotlib pour l'affichage de la courbe
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -12,12 +13,14 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib import style
 
+#librairie numpy pour les fonctions mathématiques
 import numpy as np
 
+#librairie tkinter pour la GUI (Graphical User Interface)
 import tkinter as tk
 from tkinter import ttk
 
-############################### VARIABLES ############################## (toutes les distances sont en kilomètres)
+############################### VARIABLES ############################## 
 gamma = 1 #constante de RG
 c = 2.99792458*10**8 #célérité de la lumière (en m/s)
 G = 6.6738480*10**-11 #constante gravitationnelle (en m**3 kg**-1 s**-2)
@@ -35,20 +38,25 @@ coorTerre = [0,-distTerreAstre] #coordonnées de la Terre si l'on considère un 
 coeffTrajSonde = 3 #coefficient de la trajectoire de la sonde
 deltaPosSonde = ((3600*24)/freqMesure)*vitSonde/1000 #distance parcourue entre deux mesures par la sonde (en km)
 coorSondeInit = ((0+((int(len(coorSonde))/2)*np.sqrt((deltaPosSonde**2)/coeffTrajSonde))),(1114402.130+((int(len(coorSonde))/2)*np.sqrt((deltaPosSonde**2)-((deltaPosSonde**2)/coeffTrajSonde))))) #coordonnées initiales de la sonde au début de la période d'observations
-retardSh = [0]*len(coorSonde)
-freqShift = [0]*len(coorSonde)
-xAxe = [0]*len(coorSonde)
-bMin = 0
-LARGE_FONT= ("Verdana", 15)
-NORMAL_TEXT= ("Verdana", 10)
-style.use('ggplot')
+retardSh = [0]*len(coorSonde) #initialisation du tableau de mesure du retard Shapiro au cours du temps
+freqShift = [0]*len(coorSonde) #initialisation du tableau de mesure décalage en fréquences au cours du temps
+xAxe = [0]*len(coorSonde) #initialisation de l'axe X (jours d'observation autour de la conjonction solaire)
+bMin = 0 #DEBUG UNIQUEMENT : valeur minimum de b au cours de l'observation
+LARGE_FONT= ("Verdana", 15) #police de caractères des titres
+NORMAL_TEXT= ("Verdana", 10) #police de caractères du texte principal
+style.use('ggplot') #style de l'affichage de la courbe
+f = Figure(figsize=(6,5), dpi=100) #initialisation de la figure matplotlib
+a = f.add_subplot(111) #initialisation de la courbe
+
 
 def calculFS():
+    ############### RECUPERATION DES VARIABLES GLOBALES #################
     global rayonSchw
     global freqShift
     global retardSh
     global xAxe
-    ################# RECALCUL DES PARAMETRES ############################
+
+    ############## RECALCUL DES CONDITIONS DE SIMULATION #################
     rayonSchw = (2*G*masseAstre)/(c**2) #rayon de Schwarzschild (en mètres)
     coorSonde = [[0,0]]*dureeObs*freqMesure #tableau de coordonnées de points appartenant à la trajectoire de la sonde
     deltaPosSonde = ((3600*24)/freqMesure)*vitSonde/1000 #distance parcourue entre deux mesures par la sonde (en km)
@@ -60,15 +68,10 @@ def calculFS():
     ################ CALCUL COORDONNEES SONDE ############################
     for i in range (0,(int(len(coorSonde)))):
         newCoorSonde = [0,0]
-        #if (i>= 0):
         newCoorSonde[0] = coorSondeInit[0]-(i*np.sqrt((deltaPosSonde**2)/coeffTrajSonde))
         newCoorSonde[1] = coorSondeInit[1]+(i*np.sqrt((deltaPosSonde**2)-((deltaPosSonde**2)/coeffTrajSonde)))
-        #else:
-        #    newCoorSonde[0] = coorSondeInit[0]-(i*np.sqrt((deltaPosSonde**2)/coeffTrajSonde))
-        #    newCoorSonde[1] = coorSondeInit[1]+(i*np.sqrt((deltaPosSonde**2)-((deltaPosSonde**2)/coeffTrajSonde)))
         coorSonde[i] = newCoorSonde
         xAxe[i] = (i-(int(len(coorSonde)/2)))*(dureeObs/(dureeObs*freqMesure))
-        #print("Coordonnées point de mesure "+str(i)+" : ("+str(newCoorSonde[0])+";"+str(newCoorSonde[1])+")")
 
 
     for x in range (0,len(coorSonde)):#
@@ -84,64 +87,54 @@ def calculFS():
 
 
         ######################## CALCUL RETARD SHAPIRO ###################
-        #d'après la formule pour un aller-retour à proximité d'un astre massif
+        #d'après la formule pour un aller-retour à proximité d'un astre massif (pas d'affichage de ce résultat, calcul bonus :) )
         if (b!=0):
             retardSh[x] = (1+gamma)*(rayonSchw/c)*(np.log((4*r1*r2)/(b**2))+1)
         else:
-            retardSh[0] = 99999999999
+            retardSh[x] = 99999999999
 
         ##################### CALCUL DECALAGE FREQUENTIEL ####################
         if (b!=0):
             freqShift[x] = -(rayonSchw/c)*(1+gamma)*(1/b)*vitTerre
         else:
-            retardSh[0] = 99999999999
+            freqShift[x] = 0 #Décalage non observable au moment de la conjonction solaire, valeur nulle artificielle pour la clarté de la courbe 
 
         if freqShift[x] > freqShift[x-1] :
             bMin = b
 
 
-    ##################### AFFICHAGE DES RESULTATS ########################
-    print("Masse de l'astre : "+str(masseAstre))
-    print("Rayon de Schwarzschild : "+str(rayonSchw))
+    ############## AFFICHAGE CONSOLE DES RESULTATS ####################
+    #print("Masse de l'astre : "+str(masseAstre))
+    #print("Rayon de Schwarzschild : "+str(rayonSchw))
     #print("Retard Shapiro : "+str(retardSh))
     #print("Décalage fréquentiel : "+str(freqShift))
-    print("Distance entre mesures : "+str(deltaPosSonde))
-    print("Coordonnées point de mesure 1 : ("+str(coorSonde[0][0])+","+str(coorSonde[0][1])+")")
-    print("Coordonnées point de mesure 2 : ("+str(coorSonde[1][0])+","+str(coorSonde[1][1])+")")
-    print("Distance parcourue par la sonde au cours de la période d'observation : "+str(dureeObs*24*3600*vitSonde/1000)+" km")
-    print("Distance entre le premier et le dernier point de mesure : "+str(np.sqrt(((coorSonde[int(len(coorSonde))-1][0]-coorSonde[0][0])**2+(coorSonde[int(len(coorSonde))-1][1]-coorSonde[0][1])**2)))+" km")
-    print("paramètre bMin : "+str(bMin))
-    print(len(coorSonde))
-
-    #plt.plot(xAxe, freqShift, '-', color = "blue", lw = 1)
-    #plt.title("Décalage fréquentiel subi aux alentours d'un astre massif\n")
-    #plt.xlabel("Jours d'observations")
-    #plt.ylabel("Décalage fréquentiel")
-    #plt.show()
-    #plt.close()
+    #print("Distance entre mesures : "+str(deltaPosSonde))
+    #print("Coordonnées point de mesure 1 : ("+str(coorSonde[0][0])+","+str(coorSonde[0][1])+")")
+    #print("Coordonnées point de mesure 2 : ("+str(coorSonde[1][0])+","+str(coorSonde[1][1])+")")
+    #print("Distance parcourue par la sonde au cours de la période d'observation : "+str(dureeObs*24*3600*vitSonde/1000)+" km")
+    #print("Distance entre le premier et le dernier point de mesure : "+str(np.sqrt(((coorSonde[int(len(coorSonde))-1][0]-coorSonde[0][0])**2+(coorSonde[int(len(coorSonde))-1][1]-coorSonde[0][1])**2)))+" km")
+    #print("paramètre bMin : "+str(bMin))
 
 
-#calculFS()
-
-f = Figure(figsize=(6,5), dpi=100)
-a = f.add_subplot(111)
-
+############## GESTION DU RAFRAICHISSEMENT DE LA COURBE ###############
 def animate(i):
     a.clear()
     a.plot(xAxe, freqShift)
-    #a.set_title("Décalage fréquentiel au cours du temps d'observation")
+    #a.set_title("Décalage fréquentiel au cours du temps d'observation") #commenté car titre redondant avec celui de l'application
     a.set_xlabel("Jours autour de la conjonction solaire")
     a.set_ylabel("Décalage fréquentiel")
 
 
+####################### CONFIGURATION DE LA GUI #######################
 class SimuShapiroApp(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         
         tk.Tk.__init__(self, *args, **kwargs)
-        tk.Tk.iconbitmap(self,default='simu-shapiro.ico')
-        tk.Tk.wm_title(self, "Simulation - Effet Shapiro")
+        tk.Tk.iconbitmap(self,default='simu-shapiro.ico') #définition de l'icône de l'application
+        tk.Tk.wm_title(self, "Simulation - Effet Shapiro") #définition du nom de l'application
         
+        #################### CREATION DE LA FENETRE PRINCIPALE ####################
         container = tk.Frame(self)
 
         container.pack(side="top", fill="both", expand = True)
@@ -151,6 +144,7 @@ class SimuShapiroApp(tk.Tk):
 
         self.frames = {}
 
+        ################### CREATION DES PAGES DE L'APPLICATION ###################
         for F in (StartPage, Courbe):
 
             frame = F(container, self)
@@ -166,7 +160,7 @@ class SimuShapiroApp(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-        
+################ CONFIGURATION DE LA PAGE D'ACCUEIL ###################
 class StartPage(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -208,7 +202,7 @@ avec les paramètres spécifiés.\n", justify="center", font=NORMAL_TEXT) #Un la
                             command=lambda: [updateVar(),calculFS(), controller.show_frame(Courbe),Courbe.refresh])
         button.pack()
 
-
+############## CONFIGURATION DE LA PAGE DE RESULTATS ##################
 class Courbe(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -263,9 +257,8 @@ class Courbe(tk.Frame):
         Rayon de Schwarzschild de l'astre : "+str(rayonSchw)+" mètres\n\
         ")
         self.after(1000, self.refresh)
-        #refresh_button = tk.Button(self, text="Refresh", command=self.refresh)
-        #refresh_button.pack()
 
+##################### LANCEMENT DE L'APPLICATION ######################
 app = SimuShapiroApp()
 ani = animation.FuncAnimation(f, animate, interval=1000)
 app.mainloop()
